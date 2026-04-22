@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPN Protocol Tiers — A Field Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,900;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d10;
+    --bg-elev: #11161b;
+    --bg-card: #141a20;
+    --ink: #e8e4d8;
+    --ink-dim: #7a8690;
+    --ink-faint: #3a434b;
+    --rule: #1e262d;
+    --t1: #7dd87d;     /* tier 1 — green */
+    --t2: #e8c547;     /* tier 2 — amber */
+    --t3: #e89547;     /* tier 3 — orange */
+    --t4: #e85a5a;     /* tier 4 — red */
+    --accent: #62d0c4; /* cyan accent */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 300;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 48px 24px 80px;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(98, 208, 196, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(232, 90, 90, 0.05) 0%, transparent 50%);
+  }
+
+  /* Subtle grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.9 0 0 0 0 0.9 0 0 0 0 0.85 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ============ HEADER ============ */
+  .header {
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
+    padding: 32px 0;
+    margin-bottom: 56px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 32px;
+    align-items: end;
+  }
+
+  .doc-meta {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    line-height: 1.8;
+  }
+
+  .doc-meta .label {
+    color: var(--ink-faint);
+    display: inline-block;
+    width: 72px;
+  }
+
+  .title-block h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(42px, 6vw, 76px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+  }
+
+  .title-block h1 em {
+    font-style: italic;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .title-block .sub {
+    margin-top: 16px;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+  }
+
+  .stamp {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--t4);
+    border: 1px solid var(--t4);
+    padding: 8px 14px;
+    transform: rotate(-2deg);
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+
+  .stamp span {
+    display: block;
+    font-size: 8px;
+    color: var(--ink-dim);
+    border-color: var(--ink-dim);
+  }
+
+  /* ============ INTRO ============ */
+  .intro {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 48px;
+    margin-bottom: 72px;
+    padding-bottom: 48px;
+    border-bottom: 1px dashed var(--ink-faint);
+  }
+
+  .intro .axis {
+    position: relative;
+    padding-left: 24px;
+  }
+
+  .intro .axis::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--t1), var(--t2), var(--t3), var(--t4));
+  }
+
+  .intro .axis-label {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 12px;
+  }
+
+  .intro .axis-name {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 400;
+    font-style: italic;
+    margin-bottom: 4px;
+  }
+
+  .intro .axis-poles {
+    font-size: 11px;
+    color: var(--ink-dim);
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+
+  .intro p {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 300;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+
+  .intro p strong {
+    font-weight: 600;
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  /* ============ TIERS ============ */
+  .tiers {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .tier {
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    position: relative;
+    padding: 36px 40px;
+    display: grid;
+    grid-template-columns: 180px 1fr 220px;
+    gap: 40px;
+    transition: border-color 0.4s ease;
+  }
+
+  .tier::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--tier-color);
+  }
+
+  .tier:hover {
+    border-color: var(--tier-color);
+  }
+
+  .tier[data-tier="1"] { --tier-color: var(--t1); }
+  .tier[data-tier="2"] { --tier-color: var(--t2); }
+  .tier[data-tier="3"] { --tier-color: var(--t3); }
+  .tier[data-tier="4"] { --tier-color: var(--t4); }
+
+  /* Left column: tier number + signal */
+  .tier-index {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .tier-num {
+    font-family: 'Fraunces', serif;
+    font-size: 96px;
+    font-weight: 300;
+    line-height: 0.85;
+    color: var(--tier-color);
+    letter-spacing: -0.04em;
+  }
+
+  .tier-num sup {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--ink-dim);
+    vertical-align: top;
+    margin-left: 6px;
+    font-weight: 400;
+    top: 8px;
+    position: relative;
+  }
+
+  .signal {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .signal-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  .signal-bars {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+    height: 28px;
+  }
+
+  .signal-bars span {
+    flex: 1;
+    background: var(--ink-faint);
+    transition: background 0.3s ease;
+  }
+
+  .signal-bars span.on { background: var(--tier-color); }
+  .signal-bars span:nth-child(1) { height: 25%; }
+  .signal-bars span:nth-child(2) { height: 50%; }
+  .signal-bars span:nth-child(3) { height: 75%; }
+  .signal-bars span:nth-child(4) { height: 100%; }
+
+  .signal-value {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--tier-color);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* Middle column: content */
+  .tier-body .tier-tagline {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--tier-color);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .tier-body h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 34px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 18px;
+    color: var(--ink);
+  }
+
+  .tier-body h2 em {
+    font-style: italic;
+    font-weight: 600;
+  }
+
+  .tier-body .desc {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--ink);
+    margin-bottom: 20px;
+    max-width: 540px;
+  }
+
+  .tier-body .weakness {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-dim);
+    padding-left: 16px;
+    border-left: 1px solid var(--tier-color);
+    max-width: 540px;
+  }
+
+  .tier-body .weakness::before {
+    content: 'Detected via: ';
+    font-family: 'JetBrains Mono', monospace;
+    font-style: normal;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--tier-color);
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+
+  /* Right column: protocols */
+  .protocols {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-left: 1px solid var(--rule);
+    padding-left: 24px;
+  }
+
+  .protocols-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 8px;
+  }
+
+  .proto {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dotted var(--rule);
+    font-size: 12px;
+  }
+
+  .proto:last-child { border-bottom: none; }
+
+  .proto-name {
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .proto-note {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+  }
+
+  /* ============ FOOTER ============ */
+  .footer {
+    margin-top: 72px;
+    padding-top: 32px;
+    border-top: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 48px;
+  }
+
+  .footer-block .fb-label {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 14px;
+  }
+
+  .footer-block .fb-body {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  .footer-block .fb-body em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .sig {
+    text-align: right;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-top: 48px;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 900px) {
+    body { padding: 32px 16px 60px; }
+    .header { grid-template-columns: 1fr; gap: 24px; }
+    .stamp { justify-self: start; }
+    .intro { grid-template-columns: 1fr; gap: 32px; }
+    .tier {
+      grid-template-columns: 1fr;
+      padding: 28px 24px;
+      gap: 28px;
+    }
+    .tier-index {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .tier-num { font-size: 72px; }
+    .signal { align-items: flex-end; }
+    .protocols {
+      border-left: none;
+      border-top: 1px solid var(--rule);
+      padding-left: 0;
+      padding-top: 20px;
+    }
+    .footer { grid-template-columns: 1fr; gap: 32px; }
+  }
+
+  /* ============ ANIMATION ============ */
+  .tier {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: reveal 0.6s ease-out forwards;
+  }
+  .tier[data-tier="1"] { animation-delay: 0.1s; }
+  .tier[data-tier="2"] { animation-delay: 0.25s; }
+  .tier[data-tier="3"] { animation-delay: 0.4s; }
+  .tier[data-tier="4"] { animation-delay: 0.55s; }
+
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .header, .intro {
+    opacity: 0;
+    animation: reveal 0.7s ease-out forwards;
+  }
+  .intro { animation-delay: 0.1s; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="header">
+    <div class="doc-meta">
+      <div><span class="label">Doc №</span> 04 / 04</div>
+      <div><span class="label">Subject</span> VPN Protocols</div>
+      <div><span class="label">Format</span> Field Guide</div>
+    </div>
+    <div class="title-block">
+      <h1>Four tiers of <em>visibility</em>.</h1>
+      <div class="sub">A taxonomy of VPN protocols by detection resistance</div>
+    </div>
+    <div class="stamp">
+      Not all VPNs<br>look alike
+      <span>— on the wire</span>
+    </div>
+  </header>
+
+  <section class="intro">
+    <div class="axis">
+      <div class="axis-label">Axis of measurement</div>
+      <div class="axis-name">Detectability</div>
+      <div class="axis-poles">
+        <span>obvious</span>
+        <span>invisible</span>
+      </div>
+    </div>
+    <p>
+      Two servers running <strong>"a VPN"</strong> can behave completely differently on real-world networks. The difference is almost always the protocol — specifically, how easy it is to distinguish from ordinary web traffic. The spectrum runs from protocols that announce themselves with a simple packet signature, to mimicry layers that serve a real website to anyone who asks.
+    </p>
+  </section>
+
+  <section class="tiers">
+
+    <!-- TIER 1 -->
+    <article class="tier" data-tier="1">
+      <div class="tier-index">
+        <div class="tier-num">01<sup>/04</sup></div>
+        <div class="signal">
+          <div class="signal-label">Resistance</div>
+          <div class="signal-bars">
+            <span class="on"></span><span></span><span></span><span></span>
+          </div>
+          <div class="signal-value">Low</div>
+        </div>
+      </div>
+      <div class="tier-body">
+        <div class="tier-tagline">Easy to identify</div>
+        <h2>Clear <em>signature</em>, plain sight.</h2>
+        <p class="desc">
+          The default set. Fast, well-understood, widely deployed — and broadcasting what they are to anyone inspecting the wire. Perfectly adequate on networks that don't filter by protocol class, which is most of them.
+        </p>
+        <div class="weakness">A simple packet signature — or, in some cases, the port number alone.</div>
+      </div>
+      <div class="protocols">
+        <div class="protocols-label">Members</div>
+        <div class="proto"><span class="proto-name">WireGuard</span><span class="proto-note">UDP</span></div>
+        <div class="proto"><span class="proto-name">OpenVPN</span><span class="proto-note">UDP</span></div>
+        <div class="proto"><span class="proto-name">IKEv2</span><span class="proto-note">IPsec</span></div>
+        <div class="proto"><span class="proto-name">L2TP</span><span class="proto-note">legacy</span></div>
+      </div>
+    </article>
+
+    <!-- TIER 2 -->
+    <article class="tier" data-tier="2">
+      <div class="tier-index">
+        <div class="tier-num">02<sup>/04</sup></div>
+        <div class="signal">
+          <div class="signal-label">Resistance</div>
+          <div class="signal-bars">
+            <span class="on"></span><span class="on"></span><span></span><span></span>
+          </div>
+          <div class="signal-value">Moderate</div>
+        </div>
+      </div>
+      <div class="tier-body">
+        <div class="tier-tagline">TLS-wrapped, still fingerprintable</div>
+        <h2>Dressed as <em>HTTPS</em>. Almost.</h2>
+        <p class="desc">
+          These protocols ride on TLS, so at a glance they look like ordinary web traffic. The giveaway is in the details: handshake ordering, cipher preferences, and extension quirks that differ from what a real browser produces.
+        </p>
+        <div class="weakness">TLS handshake fingerprinting — JA3/JA4-class analysis.</div>
+      </div>
+      <div class="protocols">
+        <div class="protocols-label">Members</div>
+        <div class="proto"><span class="proto-name">OpenVPN</span><span class="proto-note">TCP</span></div>
+        <div class="proto"><span class="proto-name">SOCKS Proxy</span><span class="proto-note">TLS</span></div>
+        <div class="proto"><span class="proto-name">HTTPS Proxy</span><span class="proto-note">plain</span></div>
+      </div>
+    </article>
+
+    <!-- TIER 3 -->
+    <article class="tier" data-tier="3">
+      <div class="tier-index">
+        <div class="tier-num">03<sup>/04</sup></div>
+        <div class="signal">
+          <div class="signal-label">Resistance</div>
+          <div class="signal-bars">
+            <span class="on"></span><span class="on"></span><span class="on"></span><span></span>
+          </div>
+          <div class="signal-value">High</div>
+        </div>
+      </div>
+      <div class="tier-body">
+        <div class="tier-tagline">Camouflaged as web traffic</div>
+        <h2>Convincing, but <em>probe-able</em>.</h2>
+        <p class="desc">
+          Designed to blend in. Simple DPI rules won't catch them. More sophisticated approaches still can — by analyzing the statistical entropy of packet headers, or by "active probing," where the inspector itself connects to the server to see whether it behaves like a real web host.
+        </p>
+        <div class="weakness">Entropy analysis of headers, or active probing of the server.</div>
+      </div>
+      <div class="protocols">
+        <div class="protocols-label">Members</div>
+        <div class="proto"><span class="proto-name">Shadowsocks</span><span class="proto-note">SS</span></div>
+        <div class="proto"><span class="proto-name">OpenConnect</span><span class="proto-note">AnyConnect</span></div>
+        <div class="proto"><span class="proto-name">OpenVPN + XOR</span><span class="proto-note">patch</span></div>
+        <div class="proto"><span class="proto-name">SoftEther</span><span class="proto-note">tunnel</span></div>
+      </div>
+    </article>
+
+    <!-- TIER 4 -->
+    <article class="tier" data-tier="4">
+      <div class="tier-index">
+        <div class="tier-num">04<sup>/04</sup></div>
+        <div class="signal">
+          <div class="signal-label">Resistance</div>
+          <div class="signal-bars">
+            <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+          </div>
+          <div class="signal-value">Maximum</div>
+        </div>
+      </div>
+      <div class="tier-body">
+        <div class="tier-tagline">Indistinguishable from web traffic</div>
+        <h2>Mimicry, <em>weaponized</em>.</h2>
+        <p class="desc">
+          Not VPN protocols themselves — mimicry layers you bolt onto an existing tunnel via the Pluggable Transports interface. Cloak goes further: configure a "donor" website, and anyone who probes your server gets served real content from that site. The tunnel is invisible beneath a working web host.
+        </p>
+        <div class="weakness">In practice — only sloppy configuration (bad certs, port choices).</div>
+      </div>
+      <div class="protocols">
+        <div class="protocols-label">Members</div>
+        <div class="proto"><span class="proto-name">Cloak</span><span class="proto-note">mimic</span></div>
+        <div class="proto"><span class="proto-name">v2ray</span><span class="proto-note">multi</span></div>
+        <div class="proto"><span class="proto-name">VLESS</span><span class="proto-note">XTLS</span></div>
+        <div class="proto"><span class="proto-name">wstunnel</span><span class="proto-note">WS</span></div>
+      </div>
+    </article>
+
+  </section>
+
+  <footer class="footer">
+    <div class="footer-block">
+      <div class="fb-label">Operating Note I</div>
+      <div class="fb-body">A single protocol is a <em>single point of failure</em>. Running two — one fast, one stealthy — costs little and buys a lot.</div>
+    </div>
+    <div class="footer-block">
+      <div class="fb-label">Operating Note II</div>
+      <div class="fb-body">Tier is relative. A Tier 1 protocol is <em>entirely adequate</em> on a network that doesn't inspect traffic.</div>
+    </div>
+    <div class="footer-block">
+      <div class="fb-label">Operating Note III</div>
+      <div class="fb-body">The stack is <em>separable</em>: pick a tunnel, pick a camouflage layer, swap either without touching the other.</div>
+    </div>
+  </footer>
+
+  <div class="sig">// End of document</div>
+
+</div>
+</body>
+</html>
